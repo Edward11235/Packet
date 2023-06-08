@@ -30,3 +30,5 @@ target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 # Build examples
 add_executable(publisher src/Publisher.cc)
 target_link_libraries(publisher ${PROJECT_NAME} pthread)
+add_executable(subscriber src/Subscriber.cc)
+target_link_libraries(subscriber ${PROJECT_NAME} pthread)

@@ -30,8 +30,11 @@ int main(int argc, char **argv) {
     // initialize a image, a double, and a json
     std::string imagePath = "../src/sunflower.jpg";
     cv::Mat color_image = cv::imread(imagePath);
+    cv::imwrite("test.jpg", color_image);
+
     double timestamp = 123.456;
     nlohmann::json json_data;
+    json_data["key"] = "value";
 
     // send image
     std::vector<uchar> data;

@@ -65,6 +65,8 @@
         "list": "cpp",
         "cfenv": "cpp",
         "typeindex": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "csignal": "cpp",
+        "future": "cpp"
     }
 }
