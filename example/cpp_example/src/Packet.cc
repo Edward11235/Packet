@@ -12,11 +12,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <iomanip>
 
 #include "Packet.h"
 
-#define DEBUG
+// #define DEBUG
 
 PacketSerializer::PacketSerializer(const char * addr, unsigned short port) {
 	this->addr = addr;
