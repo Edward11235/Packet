@@ -56,11 +56,8 @@ int main(int argc, char **argv){
 
             // memory clean up since we used C to write Packet
             delete[] image_packet.payload;
-            delete &image_packet;
             delete[] value_packet.payload;
-            delete &value_packet;
             delete[] json_packet.payload;
-            delete &json_packet;
         }
         catch (std::exception& e)
         {
