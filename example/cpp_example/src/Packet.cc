@@ -12,8 +12,11 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <iomanip>
 
 #include "Packet.h"
+
+#define DEBUG
 
 PacketSerializer::PacketSerializer(const char * addr, unsigned short port) {
 	this->addr = addr;
@@ -22,7 +25,6 @@ PacketSerializer::PacketSerializer(const char * addr, unsigned short port) {
 }
 
 int PacketSerializer::start() {
-	std::cout << "#################################" << std::endl;
 	int status;
 	int ref = ::socket(AF_INET, SOCK_STREAM, 0);
 	if(ref < 0) return -1; // Unable to initialized socket
@@ -101,6 +103,18 @@ PacketDeserializerWorker::~PacketDeserializerWorker() {
 	close(this->socket);
 }
 
+int my_read(int socket, void * buf0, int size) {
+    char * buf = (char *)buf0; 
+    int bytes_read = 0; 
+    while(true) {
+        int status = read(socket, buf + bytes_read, size - bytes_read); 
+        if(status < 0) return status; 
+        bytes_read += status; 
+        if(bytes_read >= size) break; 
+    }
+    return bytes_read; 
+}
+
 void PacketDeserializerWorker::run() {
 #ifdef DEBUG
 	using namespace std;
@@ -115,7 +129,7 @@ void PacketDeserializerWorker::run() {
 	__attribute__((packed)) header;
 	while(true) {
 		int status;
-		status = read(this->socket, &header, sizeof(header));
+		status = my_read(this->socket, &header, sizeof(header));
 		if(status <= 0) {
 #ifdef DEBUG
 			cout << "[B] Header read fail" << endl;
@@ -133,7 +147,8 @@ void PacketDeserializerWorker::run() {
 		header.chksum = ntohs(header.chksum);
 		if(header.chksum != 0xABCD) {
 #ifdef DEBUG
-			cout << "[C] Invalid header chksum" << endl;
+			cout << "[C] Invalid header chksum ";
+			printf("0x%04X\n", header.chksum);
 #endif
 			continue;
 		}
@@ -144,7 +159,7 @@ void PacketDeserializerWorker::run() {
 			break;
 		}
 		char * buffer = new char[header.size];
-		status = read(this->socket, buffer, header.size);
+		status = my_read(this->socket, buffer, header.size);
 		if(status <= 0) {
 #ifdef DEBUG
 			cout << "[B] Payload read fail" << endl;
@@ -154,13 +169,13 @@ void PacketDeserializerWorker::run() {
 		}
 		if(status != header.size) {
 #ifdef DEBUG
-			cout << "[C] Invalid payload" << endl;
+			cout << "[C] Invalid payload " << status << " | " << header.size << endl;
 #endif
 			delete[] buffer;
 			continue;
 		}
 		unsigned short chksum2;
-		status = read(this->socket, &chksum2, sizeof(chksum2));
+		status = my_read(this->socket, &chksum2, sizeof(chksum2));
 		chksum2 = ntohs(chksum2);
 		if(chksum2 != 0xDCBA) {
 #ifdef DEBUG

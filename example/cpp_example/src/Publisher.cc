@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     std::pair<char*, size_t> result = serializeVectorToCharPtr(data);
     char* serializedData = result.first;
     size_t serializedSize = result.second;
-    channel.write(1, serializedData, serializedSize/100);
+    channel.write(1, serializedData, serializedSize);
     
     // send double
     channel.write(2, (const char *)&timestamp, 8);
