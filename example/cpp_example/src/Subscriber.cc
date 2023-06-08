@@ -34,14 +34,11 @@ int main(int argc, char **argv){
             cv::Mat image;
             Packet image_packet;
             channel.read(image_packet);
-            if(image_packet.type = 1) std::cout << "Received!" << std::endl;
+            if(image_packet.type = 1) std::cout << "Received image" << std::endl;
             if(image_packet.type != 1) std::cout << "warning: wrong type. Should be one for image" << std::endl;
             std::vector<unsigned char> deserializedData = deserializeVectorFromCharPtr(image_packet.payload, image_packet.size);
             image = cv::imdecode(cv::Mat(deserializedData), cv::IMREAD_COLOR);
-            if (!cv::imwrite("output.jpg", image)) {
-                std::cout << "Could not write the image" << std::endl;
-                return -1;
-            }
+            cv::imwrite("received.jpg", image);
 
             // receive double
             double value;
@@ -56,6 +53,14 @@ int main(int argc, char **argv){
             std::string json_str(json_packet.payload, json_packet.size);
             nlohmann::json json_parsed = nlohmann::json::parse(json_str);
             std::cout << "Received json: " << json_parsed << std::endl;
+
+            // memory clean up since we used C to write Packet
+            delete[] image_packet.payload;
+            delete &image_packet;
+            delete[] value_packet.payload;
+            delete &value_packet;
+            delete[] json_packet.payload;
+            delete &json_packet;
         }
         catch (std::exception& e)
         {

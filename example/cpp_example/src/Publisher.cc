@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
     char* serializedData = result.first;
     size_t serializedSize = result.second;
     channel.write(1, serializedData, serializedSize);
+    delete[] result.first;
     
     // send double
     channel.write(2, (const char *)&timestamp, 8);
