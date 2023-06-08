@@ -12,13 +12,9 @@
 
 std::pair<char*, size_t> serializeVectorToCharPtr(const std::vector<unsigned char>& vec) {
     size_t size = vec.size();
-    size_t totalSize = sizeof(size_t) + size * sizeof(unsigned char);
-    char* data = new char[totalSize];
-
-    std::memcpy(data, &size, sizeof(size_t));
-    std::memcpy(data + sizeof(size_t), vec.data(), size * sizeof(unsigned char));
-
-    return std::make_pair(data, totalSize);
+    char* data = new char[size];
+    std::memcpy(data, vec.data(), size);
+    return std::make_pair(data, size);
 }
 
 int main(int argc, char **argv) {
@@ -42,7 +38,7 @@ int main(int argc, char **argv) {
     std::pair<char*, size_t> result = serializeVectorToCharPtr(data);
     char* serializedData = result.first;
     size_t serializedSize = result.second;
-    channel.write(1, serializedData, serializedSize);
+    channel.write(1, serializedData, serializedSize/100);
     
     // send double
     channel.write(2, (const char *)&timestamp, 8);

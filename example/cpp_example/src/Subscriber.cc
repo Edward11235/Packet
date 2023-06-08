@@ -13,13 +13,9 @@
 using namespace std;
 using json = nlohmann::json;
 
-std::vector<unsigned char> deserializeVectorFromCharPtr(const char* data, size_t totalSize) {
-    size_t size;
-    std::memcpy(&size, data, sizeof(size_t));
-
+std::vector<unsigned char> deserializeVectorFromCharPtr(const char* data, size_t size) {
     std::vector<unsigned char> vec(size);
-    std::memcpy(vec.data(), data + sizeof(size_t), size * sizeof(unsigned char));
-
+    std::memcpy(vec.data(), data, size);
     return vec;
 }
 
@@ -38,7 +34,8 @@ int main(int argc, char **argv){
             cv::Mat image;
             Packet image_packet;
             channel.read(image_packet);
-            if(image_packet.type != 1) std::cout << "warning: wrong type. Should be one" << std::endl;
+            if(image_packet.type = 1) std::cout << "Received!" << std::endl;
+            if(image_packet.type != 1) std::cout << "warning: wrong type. Should be one for image" << std::endl;
             std::vector<unsigned char> deserializedData = deserializeVectorFromCharPtr(image_packet.payload, image_packet.size);
             image = cv::imdecode(cv::Mat(deserializedData), cv::IMREAD_COLOR);
             if (!cv::imwrite("output.jpg", image)) {
