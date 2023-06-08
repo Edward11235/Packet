@@ -3,58 +3,51 @@
 #include <random>
 #include <fstream>
 #include <functional>
+#include <Eigen/Core>
+#include <opencv2/core/core.hpp>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/opencv.hpp>
+#include "json.hpp"
 
-// Define a CRC32 function for byte arrays
-unsigned int crc32(unsigned char* data, size_t size) {
-    unsigned int polynomial = 0xEDB88320;
-    unsigned int crc = 0xFFFFFFFF;
+std::pair<char*, size_t> serializeVectorToCharPtr(const std::vector<unsigned char>& vec) {
+    size_t size = vec.size();
+    size_t totalSize = sizeof(size_t) + size * sizeof(unsigned char);
+    char* data = new char[totalSize];
 
-    for(size_t i = 0; i < size; ++i) {
-        crc ^= data[i];
-        for(int j = 0; j < 8; j++) {
-            if(crc & 1) {
-                crc = (crc >> 1) ^ polynomial;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
+    std::memcpy(data, &size, sizeof(size_t));
+    std::memcpy(data + sizeof(size_t), vec.data(), size * sizeof(unsigned char));
 
-    return crc ^ 0xFFFFFFFF;
-};
+    return std::make_pair(data, totalSize);
+}
 
 int main(int argc, char **argv) {
+    // start packet publisher
     PacketSerializer channel("127.0.0.1", 5001);
     int status = channel.start();
     std::cout << "status is " << status << std::endl;
 
-    unsigned char * message = new unsigned char[500000]; 
+    // initialize a image, a double, and a json
+    std::string imagePath = "../src/sunflower.jpg";
+    cv::Mat color_image = cv::imread(imagePath);
+    double timestamp = 123.456;
+    nlohmann::json json_data;
 
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    std::uniform_int_distribution<int> distribution(0,255);
+    // send image
+    std::vector<uchar> data;
+    cv::imencode(".jpg", color_image, data);
+    std::pair<char*, size_t> result = serializeVectorToCharPtr(data);
+    char* serializedData = result.first;
+    size_t serializedSize = result.second;
+    channel.write(1, serializedData, serializedSize);
+    
+    // send double
+    channel.write(2, (const char *)&timestamp, 8);
 
-    for(int i = 0; i < 500000; i++) {
-        char randomChar = static_cast<char>(distribution(generator));
-        message[i] = randomChar;
-    }
+    // send json
+    std::string json_str = json_data.dump();
+    const char* charPtr = json_str.c_str();
+    channel.write(3, charPtr, json_str.size());
 
-    // Write the message to a file
-    std::ofstream outFile("random_message.txt", std::ios::binary);
-    if(outFile.is_open()) {
-        outFile.write(reinterpret_cast<const char*>(message), 500000);
-        outFile.close();
-    } else {
-        std::cout << "Unable to open file for writing." << std::endl;
-    }
-
-    // Compute CRC32
-    unsigned int crc = crc32(message, 500000);
-    std::cout << "The CRC32 of the message is: " << std::hex << crc << std::endl;
-
-    // Send the message
-    channel.write(4, reinterpret_cast<char*>(message), 500000);
-
-    delete[] message;
     return 0;
 }
